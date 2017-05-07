@@ -1,4 +1,4 @@
-PROJECT := breeze_firmware_none
+PROJECT := breeze_remote_none
 
 MCU     := cortex-m3
 
@@ -7,30 +7,21 @@ DDEFS   += -DHSE_VALUE=8000000 -DUSE_STDPERIPH_DRIVER
 
 SRC_ASM := ../Libraries/CMSIS/startup/gcc/startup_stm32f10x_md.s
 
-DIR_DRIVERS += ../Drivers/Driver_Clock/
+DIR_DRIVERS += ../Drivers/Driver_ADC/
 DIR_DRIVERS += ../Drivers/Driver_Delay/
 DIR_DRIVERS += ../Drivers/Driver_EEPROM/
 DIR_DRIVERS += ../Drivers/Driver_Flash/
-DIR_DRIVERS += ../Drivers/Driver_IIC/
-DIR_DRIVERS += ../Drivers/Driver_IO/
-DIR_DRIVERS += ../Drivers/Driver_NVIC/
 DIR_DRIVERS += ../Drivers/Driver_SPI/
 DIR_DRIVERS += ../Drivers/Driver_Timer/
 DIR_DRIVERS += ../Drivers/Driver_USART/
 
-DIR_MODULES += ../Modules/Module_Battery/
 DIR_MODULES += ../Modules/Module_CommLink/
+DIR_MODULES += ../Modules/Module_Key/
 DIR_MODULES += ../Modules/Module_LED/
-DIR_MODULES += ../Modules/Module_Motor/
-DIR_MODULES += ../Modules/Module_MPU6050/
-DIR_MODULES += ../Modules/Module_MS5611/
 DIR_MODULES += ../Modules/Module_NRF24L01/
+DIR_MODULES += ../Modules/Module_System/
 
-DIR_ALGORITHM += ../Algorithm/Algorithm_Altitude/
 DIR_ALGORITHM += ../Algorithm/Algorithm_Control/
-DIR_ALGORITHM += ../Algorithm/Algorithm_Filter/
-DIR_ALGORITHM += ../Algorithm/Algorithm_Flight/
-DIR_ALGORITHM += ../Algorithm/Algorithm_IMU/
 
 SRC_C   += $(wildcard ../Libraries/CMSIS/*.c)
 SRC_C   += $(wildcard ../Libraries/FWLib/src/*.c)
