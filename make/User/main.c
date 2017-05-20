@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "stm32f10x_it.h"
 #include "stm32f10x_driver_adc.h"
 #include "stm32f10x_driver_delay.h"
@@ -16,10 +17,10 @@
 extern char IMUcalibratflag;
 extern char Lockflag;
 
+#define UART_DEBUG 1
+
 int main(void)
 {
-    static char ledsta;
-    /***********************************/
     SystemClock_HSI(9);           //系统时钟初始化，时钟源内部HSI
     cycleCounterInit();				    // Init cycle counter
     SysTick_Config(SystemCoreClock / 1000);	//SysTick开启系统tick定时器并初始化其中断，1ms
@@ -31,9 +32,9 @@ int main(void)
     Adc_Init();										//摇杆AD初始化
     KeyInit();										//按键初始化
     NRF24L01_INIT();              //NRF24L01初始化
-    SetTX_Mode();                 //设无线模块为接收模式
+    SetTX_Mode();                 //设无线模块为发送模式
     controlClibra();							//遥控摇杆校准
-#ifdef UART_DEBUG
+#if UART_DEBUG
     TIM3_Init(SysClock,2000);			//定时器初始化，1s为周期打印摇杆值
 #endif
     TIM4_Init(SysClock,TIME4_Preiod);	  //定时器4初始化，定时时间单位：(TIME4_Preiod)微秒
@@ -48,6 +49,8 @@ int main(void)
     LedSet(led2,0);
     LedSet(led3,0);
 
+    LedSet(signalLED, 1);
+
     while (1)
     {
         //10Hz loop
@@ -55,8 +58,8 @@ int main(void)
         {
             flag10Hz = 0;
             /*status led*/
-            ledsta = !ledsta;
-            LedSet(signalLED,ledsta);
+            // ledsta = !ledsta;
+            // LedSet(signalLED,ledsta);
             /*crazepony Lock*/
             KeyLockcrazepony();
             /*IMUcalibrate  */

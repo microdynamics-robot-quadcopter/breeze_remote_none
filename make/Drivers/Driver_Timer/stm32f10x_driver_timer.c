@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "stm32f10x_driver_timer.h"
 #include "stm32f10x_module_nrf24l01.h"
 
@@ -35,17 +36,23 @@ void TIM4_IRQHandler(void) //1ms中断一次,用于遥控器主循环
     }
 }
 
+extern int Throttle;
+extern int Pitch;
+extern int Roll;
+extern int Yaw;
 
 void TIM3_IRQHandler(void) //打印中断服务程序
 {
     if( TIM_GetITStatus(TIM3 , TIM_IT_Update) != RESET )
     {
-        // printf("thr -->%d\r\n",Throttle);
-        // printf("pitch -->%d\r\n",Pitch);
-        // printf("roll -->%d\r\n",Roll);
-        // printf("yaw -->%d\r\n",Yaw);
+
+        printf("r: %d\r\n", Roll);
+        printf("p: %d\r\n", Pitch);
+        printf("y: %d\r\n", Yaw);
+        printf("t: %d\r\n", Throttle);
         // printf("remote addr -->0x%x\r\n",TX_ADDRESS[4]);// tx addr
-        // printf("-------------\r\n");
+        printf("##########\n");
+
         TIM_ClearITPendingBit(TIM3 , TIM_FLAG_Update);   //清除中断标志
     }
 }

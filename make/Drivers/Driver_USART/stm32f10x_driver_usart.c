@@ -2,39 +2,87 @@
 #include <math.h>
 #include "stm32f10x_it.h"
 #include "stm32f10x_driver_usart.h"
+#include "stm32f10x_module_comm_link.h"
 #include "stm32f10x_algorithm_control.h"
+
+#include <errno.h>
+#include <sys/unistd.h>
 
 //uart reicer flag
 #define b_uart_head  0x80
 #define b_rx_over    0x40
 
-//////////////////////////////////////////////////////////////////
-//加入以下代码,支持printf函数,而不需要选择use MicroLIB
-// #if 1
-// #pragma import(__use_no_semihosting)
-// //标准库需要的支持函数
-// struct __FILE
-// {
-//     int handle;
-//     /* Whatever you require here. If the only file you are using is */
-//     /* standard output using printf() for debugging, no file handling */
-//     /* is required. */
-// };
-// /* FILE is typedef’ d in stdio.h. */
-// FILE __stdout;
-// //定义_sys_exit()以避免使用半主机模式
-// _sys_exit(int x)
-// {
-//     x = x;
-// }
-// //重定义fputc函数
-// int fputc(int ch, FILE *f)
-// {
-//     while((USART1->SR&0X40)==0);//循环发送,直到发送完毕
-//     USART1->DR = (u8) ch;
-//     return ch;
-// }
-// #endif
+void USART_PutChar(u8 ch)
+{
+    USART_SendData(USART1, (u8)ch);
+    while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
+}
+
+u8 USART_GetChar(void)
+{
+    while (USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET);
+    return (u8)USART_ReceiveData(USART1);
+}
+
+int _read(int file, char *ptr, int len)
+{
+    int i;
+    int num = 0;
+    char ch;
+
+    switch (file)
+    {
+        case STDIN_FILENO:
+        {
+            for (i = 0; i < len; i++)
+            {
+                ch = USART_GetChar();
+                *ptr++ = ch;
+                num++;
+            }
+            break;
+        }
+        default:
+        {
+            errno = EBADF;
+            return -1;
+        }
+    }
+
+    return num;
+}
+
+int _write(int file, char *ptr, int len)
+{
+    int i;
+
+    switch (file)
+    {
+        case STDOUT_FILENO:
+        {
+            for (i = 0; i < len; i++)
+            {
+                USART_PutChar(*ptr++ & (u16)0x01FF);
+            }
+            break;
+        }
+        case STDERR_FILENO:
+        {
+            for (i = 0; i < len; i++)
+            {
+                USART_PutChar(*ptr++ & (u16)0x01FF);
+            }
+            break;
+        }
+        default:
+        {
+            errno = EBADF;
+            return -1;
+        }
+    }
+
+    return len;
+}
 
 /**************************实现函数********************************************
 *函数原型:		void U1NVIC_Configuration(void)
@@ -110,7 +158,6 @@ void UART1_Put_Char(unsigned char DataToSend)
     USART_ITConfig(USART1, USART_IT_TXE, ENABLE);  //启动发送中断开始啪啪啪发送缓冲中的数据
 }
 
-
 // uint8_t Uart1_Put_Char(unsigned char DataToSend)
 // {
 //   UartBuf_WD(&UartTxbuf,DataToSend);//将待发送数据放在环形缓冲数组中
@@ -155,7 +202,7 @@ void UartBufClear(UartBuf *Ringbuf)
     Ringbuf->Rd_Indx=Ringbuf->Wd_Indx;
 }
 
-void UartSendBuffer(uint8_t *dat, uint8_t len)
+u8 UartSendBuffer(uint8_t *dat, uint8_t len)
 {
     uint8_t i;
 
@@ -165,9 +212,35 @@ void UartSendBuffer(uint8_t *dat, uint8_t len)
         dat++;
     }
     USART_ITConfig(USART1, USART_IT_TXE, ENABLE);  //启动发送中断开始啪啪啪发送缓冲中的数据
+
+    return i;
 }
 
 volatile uint8_t Udatatmp;//串口接收临时数据字节
+
+
+extern char IMUcalibratflag;
+extern char Lockflag;
+extern int  Throttle;
+extern int  Roll;
+extern int  Pitch;
+extern int  Yaw;
+
+#define RC_IMU_CALI  'u'
+#define RC_ARM_LOCK  'o'
+#define RC_THRUST_UP 'w'
+#define RC_THRUST_DN 's'
+#define RC_YAW_UP    'a'
+#define RC_YAW_DN    'd'
+#define RC_PITCH_UP  'i'
+#define RC_PITCH_DN  'k'
+#define RC_ROLL_UP   'j'
+#define RC_ROLL_DN   'l'
+#define RC_STEP_UP   'q'
+#define RC_STEP_DN   'e'
+#define RC_STEP       10
+
+// static int rc_step = 10;
 
 void USART1_IRQHandler(void)
 {
@@ -183,9 +256,11 @@ void USART1_IRQHandler(void)
         USART_ClearITPendingBit(USART1, USART_IT_RXNE);//清除接收中断标志
         //此种环形缓冲数组串口接收方式，适用于解包各种数据，很方便。对数据的要求是:
         //发送方必须要求有数据包头，以便解决串口数据无地址的问题
-        Udatatmp = (uint8_t) USART_ReceiveData(USART1);          //临时数据赋值
-        UartBuf_WD(&UartRxbuf,Udatatmp);               //写串口接收缓冲数组
-       // if(UartBuf_Cnt(&UartRxbuf)==0) USART_SendData(USART1, '');//串口接收数组长度等于0时，发送接收数组空标志
-       // if(UartBuf_Cnt(&UartRxbuf)==UartRxbuf.Mask) USART_SendData(USART1, '');//串口接收数组长度等于掩码时，发送接收缓冲满标志
+        Udatatmp = (uint8_t)USART_ReceiveData(USART1);          //临时数据赋值
+        UartBuf_WD(&UartRxbuf, Udatatmp);               //写串口接收缓冲数组
+        // if(UartBuf_Cnt(&UartRxbuf)==0) USART_SendData(USART1, '');//串口接收数组长度等于0时，发送接收数组空标志
+        // if(UartBuf_Cnt(&UartRxbuf)==UartRxbuf.Mask) USART_SendData(USART1, '');//串口接收数组长度等于掩码时，发送接收缓冲满标志
+        CommLink_ReceiveDataFromUSART(Udatatmp);
+        // printf("ch:%d ", Udatatmp);
     }
 }

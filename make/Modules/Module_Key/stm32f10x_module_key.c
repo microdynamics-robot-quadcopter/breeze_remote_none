@@ -98,7 +98,7 @@ void EXTI1_IRQHandler(void)
     if(EXTI_GetITStatus(EXTI_Line1) != RESET) //确保是否产生了EXTI Line中断
     {
         ClibraFlag = FAIL;
-#ifdef UART_DEBUG
+#if UART_DEBUG
         // printf("key mode press...\r\n");
 #endif
         NRF24L01_SetTxAddr();
@@ -113,7 +113,7 @@ void EXTI3_IRQHandler(void){
     if(EXTI_GetITStatus(EXTI_Line3) != RESET) //确保是否产生了EXTI Line中断
     {
         Lockflag = 1;
-#ifdef UART_DEBUG
+#if UART_DEBUG
         // printf("key add press...\r\n");
 #endif
         EXTI_ClearITPendingBit(EXTI_Line3);     //清除中断标志位
@@ -125,7 +125,7 @@ void EXTI9_5_IRQHandler(void){
     if(EXTI_GetITStatus(EXTI_Line8) != RESET) //确保是否产生了EXTI Line中断
     {
         IMUcalibratflag = !IMUcalibratflag;
-#ifdef UART_DEBUG
+#if UART_DEBUG
         // printf("key sub press...\r\n");
 #endif
         EXTI_ClearITPendingBit(EXTI_Line8);     //清除中断标志位

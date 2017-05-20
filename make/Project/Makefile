@@ -58,7 +58,7 @@ OPT  += -fdata-sections
 
 DEFS := $(DDEFS) -DRUN_FROM_FLASH=1
 
-SPECS := --specs=rdimon.specs -u _printf_float
+SPECS := --specs=nosys.specs -u _printf_float
 
 FLAGS_MCU := -mcpu=$(MCU)
 FLAGS_AS  := $(SPECS) $(FLAGS_MCU) $(OPT) -c -g -gdwarf-2 -mthumb

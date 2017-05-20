@@ -31,6 +31,6 @@ uint8_t Uart1_Put_Char(unsigned char DataToSend);
 extern uint8_t UartBuf_RD(UartBuf *Ringbuf);
 extern uint16_t UartBuf_Cnt(UartBuf *Ringbuf);
 extern void UartBuf_WD(UartBuf *Ringbuf,uint8_t DataIn);
-void UartSendBuffer(uint8_t *dat, uint8_t len);
+u8 UartSendBuffer(uint8_t *dat, uint8_t len);
 
 #endif

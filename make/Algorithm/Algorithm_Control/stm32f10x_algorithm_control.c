@@ -6,10 +6,13 @@
 #include "stm32f10x_module_nrf24l01.h"
 #include "stm32f10x_algorithm_control.h"
 
-int Throttle;
-int Roll;
-int Pitch;
-int Yaw;
+#define AMERICAN_RC_MODE 1
+#define RC_MODE_USART    1
+
+int Throttle = 1500;
+int Roll = 1500;
+int Pitch = 1500;
+int Yaw = 1500;
 
 uint16_t Throttle_Calibra=0;
 uint16_t Pitch_Calibra   =0;
@@ -25,8 +28,10 @@ char IMUcalibratflag = 0;
 */
 void LoadRCdata(void)
 {
+#if RC_MODE_USART
+#else
     /*以下为美国手的对应关系*/
-#ifdef AMERICAN_RC_MODE
+#if AMERICAN_RC_MODE
     Throttle=1500 - (Throttle_Calibra-(1000 + (1000 - (1000*Get_Adc_Average(3,15))/4096)));//采集油门摇杆的位置，由于硬件原因，需要用100-采集值
     Throttle=(Throttle<=1000)?1000:Throttle;               //越界判断
     Throttle=(Throttle>=2000)?2000:Throttle;               //越界判断
@@ -60,7 +65,7 @@ void LoadRCdata(void)
     Yaw=(Yaw<=1000)?1000:Yaw;                //越界判断
     Yaw=(Yaw>=2000)?2000:Yaw;              //越界判断
 #endif
-
+#endif
 }
 
 int8_t ClibraFlag;
@@ -155,8 +160,14 @@ void KeyLockcrazepony(void)
             }
             break;
         case 0:
-            if(Locksta == 0x5a)   LedSet(led5,1);
-            else if(Locksta == 0xa5) LedSet(led5,0);
+            if (Locksta == 0x5a)
+            {
+                LedSet(led3, 1);
+            }
+            else if (Locksta == 0xa5)
+            {
+                LedSet(led3, 0);
+            }
             break;
     }
 }
@@ -184,7 +195,7 @@ void RockerUnlockcrazepony()
 /*IMUcalibrate  */
 void IMUcalibrate(void)
 {
-    LedSet(led4,IMUcalibratflag);
+    LedSet(led2, IMUcalibratflag);
     if(IMUcalibratflag)
     {
         CommUAVUpload(MSP_ACC_CALI);
