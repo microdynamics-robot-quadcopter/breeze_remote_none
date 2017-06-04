@@ -260,7 +260,8 @@ void USART1_IRQHandler(void)
         UartBuf_WD(&UartRxbuf, Udatatmp);               //写串口接收缓冲数组
         // if(UartBuf_Cnt(&UartRxbuf)==0) USART_SendData(USART1, '');//串口接收数组长度等于0时，发送接收数组空标志
         // if(UartBuf_Cnt(&UartRxbuf)==UartRxbuf.Mask) USART_SendData(USART1, '');//串口接收数组长度等于掩码时，发送接收缓冲满标志
+#if RC_MODE_USART
         CommLink_ReceiveDataFromUSART(Udatatmp);
-        // printf("ch:%d ", Udatatmp);
+#endif
     }
 }
